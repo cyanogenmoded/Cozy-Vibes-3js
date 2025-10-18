@@ -1,7 +1,7 @@
 import * as THREE from 'https://cdnjs.cloudflare.com/ajax/libs/three.js/0.180.0/three.module.js'
 import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls.js'
 import { GLTFLoader } from 'three/examples/jsm/loaders/GLTFLoader.js'
-import { GUI } from 'lil-gui'
+// import { GUI } from 'lil-gui'
 
 
 
@@ -73,7 +73,7 @@ const bloomPass = new UnrealBloomPass(
 );
 composer.addPass(bloomPass);
 
-const gui = new GUI();
+// const gui = new GUI();
 
 // Create an array to store all materials that have lightmaps
 const materialsWithLightMaps = [];
