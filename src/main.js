@@ -1,4 +1,4 @@
-import * as THREE from 'three'
+import * as THREE from 'https://cdnjs.cloudflare.com/ajax/libs/three.js/0.180.0/three.module.js'
 import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls.js'
 import { GLTFLoader } from 'three/examples/jsm/loaders/GLTFLoader.js'
 import { GUI } from 'lil-gui'
@@ -250,19 +250,6 @@ function animate() {
     }
     animateLavaLamp();
     controls.update()
-
-    // Check if camera moved significantly
-    if (camera.position.distanceTo(lastPosition) > positionThreshold || 
-        controls.target.distanceTo(lastTarget) > positionThreshold) {
-        
-        console.log('Camera moved:', {
-            position: camera.position.toArray().map(n => n.toFixed(3)),
-            target: controls.target.toArray().map(n => n.toFixed(3))
-        });
-        
-        lastPosition.copy(camera.position);
-        lastTarget.copy(controls.target);
-    }
 
     composer.render()
     requestAnimationFrame(animate)
