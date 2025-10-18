@@ -85,35 +85,6 @@ function updateLightMapIntensities() {
     });
 }
 
-// Add GUI control that updates materials when changed
-// gui.add({ LStrength }, 'LStrength', 0, 40).onChange(function (value) {
-//     LStrength = value;
-//     updateLightMapIntensities();
-// });
-
-// // Bloom folder
-// const bloomfolder = gui.addFolder('Bloom Effect');
-// bloomfolder.add(bloomPass, 'strength').min(0).max(5).step(0.1).name('Strength');
-// bloomfolder.add(bloomPass, 'radius').min(0).max(5).step(0.1).name('Radius');
-// bloomfolder.add(bloomPass, 'threshold').min(0).max(5).step(0.1).name('Threshold');
-
-// Lighting folder
-// const lightFolder = gui.addFolder('Lighting');
-// lightFolder.close();
-// const lavaLampLightFolder = lightFolder.addFolder('Lava Lamp Light');
-// lavaLampLightFolder.add(lavaLampLight, 'intensity').min(0).max(5).step(0.05).name('Intensity');
-// lavaLampLightFolder.add(lavaLampLight, 'visible').name('Enabled');
-// lavaLampLightFolder.add(lavaLampLight.position, 'x').min(-5).max(5).step(0.05).name('X Position');
-// lavaLampLightFolder.add(lavaLampLight.position, 'y').min(-5).max(5).step(0.05).name('Y Position');
-// lavaLampLightFolder.add(lavaLampLight.position, 'z').min(-5).max(5).step(0.05).name('Z Position');
-
-// const TVLightFolder = lightFolder.addFolder('Point Light 2');
-// TVLightFolder.add(TVLight, 'intensity').min(0).max(5).step(0.05).name('Intensity');
-// TVLightFolder.add(TVLight, 'visible').name('Enabled');
-// TVLightFolder.add(TVLight.position, 'x').min(-5).max(5).step(0.05).name('X Position');
-// TVLightFolder.add(TVLight.position, 'y').min(-5).max(5).step(0.05).name('Y Position');
-// TVLightFolder.add(TVLight.position, 'z').min(-5).max(5).step(0.05).name('Z Position');
-
 function animateLavaLamp() {
     const time = Date.now() * 0.001;
     // lavaLampLight.color.setHSL(Math.sin(time * 0.5) * 0.1 + 0.7, 0.8, 0.6);
@@ -174,31 +145,6 @@ loader.load('/assets/models/textured.glb', (gltf) => {
                 setupLightMap('/assets/textures/Book&Posters_lightmap.png');
                  mat.metalness = .66;
             }
-        }
-    })
-    scene.add(gltf.scene)
-})
-loader.load('/assets/models/textured1.glb', (gltf) => {
-    gltf.scene.position.set(0, 0, 0)
-    gltf.scene.scale.set(1, 1, 1)
-    
-    gltf.scene.traverse((child) => {
-        if (child instanceof THREE.Mesh) {
-            child.castShadow = true
-            child.receiveShadow = true
-            const mat = child.material;
-            
-            // Helper function to setup lightmap
-            const setupLightMap = (texturePath) => {
-                const lightmap = textureLoader.load(texturePath);
-                lightmap.channel = 1;
-                lightmap.flipY = false;
-                lightmap.colorSpace = THREE.LinearSRGBColorSpace;
-                mat.lightMap = lightmap;
-                mat.lightMapIntensity = LStrength;
-                mat.needsUpdate = true;
-                materialsWithLightMaps.push(mat);
-            };
             if (mat.name === 'Mat') {
                 setupLightMap('/assets/textures/Mat_lightmap.png');
                 mat.lightMapIntensity = 22
@@ -207,12 +153,10 @@ loader.load('/assets/models/textured1.glb', (gltf) => {
                 setupLightMap('/assets/textures/FloorItems_lightmap.png');
                  mat.metalness = .66;
             }
-           
         }
     })
     scene.add(gltf.scene)
 })
-
 
 // Add fog for atmosphere
 scene.fog = new THREE.Fog(0x222233, 10, 50);
