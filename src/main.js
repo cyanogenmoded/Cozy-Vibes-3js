@@ -1,7 +1,9 @@
 import * as THREE from 'three'
 import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls.js'
 import { GLTFLoader } from 'three/examples/jsm/loaders/GLTFLoader.js'
-// import { GUI } from 'lil-gui'
+import { GUI } from 'lil-gui'
+
+
 
 const canvas = document.querySelector('canvas.webgl')
 const scene = new THREE.Scene()
@@ -28,7 +30,10 @@ renderer.toneMappingExposure = .13
 
 const controls = new OrbitControls(camera, canvas)
 controls.enableDamping = true
+controls.dampingFactor = 0.025
 // Essential settings for interior scenes
+controls.minAzimuthAngle = 0; 
+controls.maxAzimuthAngle = Math.PI / 2;  
 controls.minPolarAngle = 0;     // Can look straight down
 controls.maxPolarAngle = Math.PI / 2; // Prevent going below floor
 controls.minDistance = 3;  // Don't get too close
@@ -43,15 +48,12 @@ const lavaLampLight = new THREE.PointLight(0xffaa33, 0.4, 20)
 lavaLampLight.position.set(0.9, .8, .45)
 lavaLampLight.castShadow = true
 scene.add(lavaLampLight)
-const pointLightHelper = new THREE.PointLightHelper( lavaLampLight, .1 );
-scene.add( pointLightHelper );
+
 
 const TVLight = new THREE.PointLight(0x77aaff, 1.5, 20)
 TVLight.position.set(1.35, .85, .75)
 TVLight.castShadow = true
 scene.add(TVLight)
-const pointLightHelper2 = new THREE.PointLightHelper( TVLight, .1 );
-scene.add( pointLightHelper2 );
 
 // Post-processing
 import { EffectComposer } from 'three/addons/postprocessing/EffectComposer.js';
@@ -71,7 +73,7 @@ const bloomPass = new UnrealBloomPass(
 );
 composer.addPass(bloomPass);
 
-// const gui = new GUI();
+const gui = new GUI();
 
 // Create an array to store all materials that have lightmaps
 const materialsWithLightMaps = [];
@@ -125,33 +127,11 @@ const textureLoader = new THREE.TextureLoader();
 
 // Animation mixer for any animations in your GLTF
 let mixer;
-
-const loadingManager = new THREE.LoadingManager();
-loadingManager.onProgress = (url, loaded, total) => {
-    console.log(`Loading: ${loaded}/${total} - ${url}`);
-};
 // GLTF Load
-const loader = new GLTFLoader(loadingManager);
+const loader = new GLTFLoader();
 loader.load('src/assets/models/textured.glb', (gltf) => {
     gltf.scene.position.set(0, 0, 0)
     gltf.scene.scale.set(1, 1, 1)
-    
-    // Set up animations if any
-    if (gltf.animations && gltf.animations.length) {
-        mixer = new THREE.AnimationMixer(gltf.scene);
-        gltf.animations.forEach((clip) => {
-            mixer.clipAction(clip).play();
-        });
-        
-        // Add animation controls to GUI
-        const animFolder = gui.addFolder('Animations');
-        gltf.animations.forEach((clip, index) => {
-            animFolder.add({[clip.name]: true}, clip.name).onChange((value) => {
-                const action = mixer.clipAction(clip);
-                value ? action.play() : action.stop();
-            });
-        });
-    }
     
     gltf.scene.traverse((child) => {
         if (child instanceof THREE.Mesh) {
@@ -205,23 +185,6 @@ loader.load('src/assets/models/textured1.glb', (gltf) => {
     gltf.scene.position.set(0, 0, 0)
     gltf.scene.scale.set(1, 1, 1)
     
-    // Set up animations if any
-    if (gltf.animations && gltf.animations.length) {
-        mixer = new THREE.AnimationMixer(gltf.scene);
-        gltf.animations.forEach((clip) => {
-            mixer.clipAction(clip).play();
-        });
-        
-        // Add animation controls to GUI
-        const animFolder = gui.addFolder('Animations');
-        gltf.animations.forEach((clip, index) => {
-            animFolder.add({[clip.name]: true}, clip.name).onChange((value) => {
-                const action = mixer.clipAction(clip);
-                value ? action.play() : action.stop();
-            });
-        });
-    }
-    
     gltf.scene.traverse((child) => {
         if (child instanceof THREE.Mesh) {
             child.castShadow = true
@@ -259,6 +222,7 @@ scene.fog = new THREE.Fog(0x222233, 10, 50);
 // More atmospheric fog
 scene.fog = new THREE.FogExp2(0x222233, 0.02); // Exponential fog for better distance falloff
 
+
 // Resize handling
 window.addEventListener('resize', () => {
     sizes.width = window.innerWidth
@@ -275,8 +239,6 @@ window.addEventListener('resize', () => {
 // Enable shadows
 renderer.shadowMap.enabled = true
 renderer.shadowMap.type = THREE.PCFSoftShadowMap
-
-
 // Animation loop
 const clock = new THREE.Clock()
 function animate() {
