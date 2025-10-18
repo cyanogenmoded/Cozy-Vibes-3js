@@ -54,15 +54,13 @@ TVLight.castShadow = true
 scene.add(TVLight)
 
 // Post-processing
-import { EffectComposer } from 'three/addons/postprocessing/EffectComposer.js';
+import { EffectComposer } from 'https://cdn.jsdelivr.net/npm/three@0.128.0/examples/jsm/postprocessing/EffectComposer.js';
+import { RenderPass } from 'https://cdn.jsdelivr.net/npm/three@0.128.0/examples/jsm/postprocessing/RenderPass.js';
+import { UnrealBloomPass } from 'https://cdn.jsdelivr.net/npm/three@0.128.0/examples/jsm/postprocessing/UnrealBloomPass.js';
 const composer = new EffectComposer(renderer);
-
-import { RenderPass } from 'three/addons/postprocessing/RenderPass.js';
 const renderPass = new RenderPass(scene, camera);
 composer.addPass(renderPass);
-
 // Bloom effect
-import { UnrealBloomPass } from 'three/addons/postprocessing/UnrealBloomPass.js';
 const bloomPass = new UnrealBloomPass(
     new THREE.Vector2(window.innerWidth, window.innerHeight),
     0.2, // Strength
