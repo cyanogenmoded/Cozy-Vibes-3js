@@ -126,7 +126,7 @@ const textureLoader = new THREE.TextureLoader();
 let mixer;
 // GLTF Load
 const loader = new GLTFLoader();
-loader.load('src/assets/models/textured.glb', (gltf) => {
+loader.load('/assets/models/textured.glb', (gltf) => {
     gltf.scene.position.set(0, 0, 0)
     gltf.scene.scale.set(1, 1, 1)
     
@@ -148,37 +148,37 @@ loader.load('src/assets/models/textured.glb', (gltf) => {
                 materialsWithLightMaps.push(mat);
             };
             if (mat.name === 'TV') {
-                setupLightMap('src/assets/textures/TV_lightmap.png');
+                setupLightMap('/assets/textures/TV_lightmap.png');
                  mat.metalness = .66;
                  mat.emissiveIntensity = 8;
             }
             if (mat.name === 'Wall') {
-                setupLightMap('src/assets/textures/Wall_lightmap.png');
+                setupLightMap('/assets/textures/Wall_lightmap.png');
             }
             if (mat.name === 'Ship_Lights_Fan') {
-                setupLightMap('src/assets/textures/Ship_Lights_Fan_lightmap.png');
+                setupLightMap('/assets/textures/Ship_Lights_Fan_lightmap.png');
                 mat.metalness = .3;
             }
             if (mat.name === 'PaperWall') {
-                setupLightMap('src/assets/textures/PaperWall_lightmap.png');
+                setupLightMap('/assets/textures/PaperWall_lightmap.png');
             }
             if (mat.name === 'Wood') {
-                setupLightMap('src/assets/textures/Wood_lightmap.png');
+                setupLightMap('/assets/textures/Wood_lightmap.png');
             }
             
             if (mat.name === 'Cupboard') {
-                setupLightMap('src/assets/textures/Cupboard_lightmap.png');
+                setupLightMap('/assets/textures/Cupboard_lightmap.png');
                  mat.metalness = .66;
             }
             if (mat.name === 'Book&Posters') {
-                setupLightMap('src/assets/textures/Book&Posters_lightmap.png');
+                setupLightMap('/assets/textures/Book&Posters_lightmap.png');
                  mat.metalness = .66;
             }
         }
     })
     scene.add(gltf.scene)
 })
-loader.load('src/assets/models/textured1.glb', (gltf) => {
+loader.load('/assets/models/textured1.glb', (gltf) => {
     gltf.scene.position.set(0, 0, 0)
     gltf.scene.scale.set(1, 1, 1)
     
@@ -200,11 +200,11 @@ loader.load('src/assets/models/textured1.glb', (gltf) => {
                 materialsWithLightMaps.push(mat);
             };
             if (mat.name === 'Mat') {
-                setupLightMap('src/assets/textures/Mat_lightmap.png');
+                setupLightMap('/assets/textures/Mat_lightmap.png');
                 mat.lightMapIntensity = 22
             }
             if (mat.name === 'FloorItems') {
-                setupLightMap('src/assets/textures/FloorItems_lightmap.png');
+                setupLightMap('/assets/textures/FloorItems_lightmap.png');
                  mat.metalness = .66;
             }
            

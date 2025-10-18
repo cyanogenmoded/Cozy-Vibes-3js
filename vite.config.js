@@ -5,6 +5,7 @@ export default defineConfig({
   build: {
     outDir: 'dist',
     assetsDir: 'assets',
+    assetsInclude: ['**/*.glb', '**/*.png', '**/*.jpg'], // Include GLB files as assets
     sourcemap: true
   },
   server: {
