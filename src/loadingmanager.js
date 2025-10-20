@@ -276,34 +276,36 @@ export class LoadingManager {
     }
 
     updateProgress(phase, progress) {
-        if (this.isDestroyed) return;
-        
-        if (phase === 'glb') {
-            this.glbProgress = progress;
-            this.currentPhase = 'glb';
-        } else if (phase === 'textures') {
-            this.texturesProgress = progress;
-            this.currentPhase = 'textures';
-        }
-        
-        let overallProgress;
-        if (this.currentPhase === 'glb') {
-            overallProgress = this.glbProgress * 0.7;
-        } else {
-            overallProgress = 70 + (this.texturesProgress * 0.3);
-        }
-        
-        const roundedProgress = Math.round(overallProgress);
-        
-        this.progressNumber.textContent = roundedProgress;
-        this.progressBar.style.setProperty('--progress-width', `${overallProgress}%`);
-        
-        if (roundedProgress === 100) {
-            this.progressNumber.style.color = '#80ff80';
-            this.progressNumber.style.textShadow = 
-                '0 0 5px #80ff80, 0 0 10px #80ff80, 0 0 15px rgba(128, 255, 128, 0.7)';
-        }
+    if (this.isDestroyed) return;
+    
+    if (phase === 'glb') {
+        this.glbProgress = progress;
+        this.currentPhase = 'glb';
+    } else if (phase === 'textures') {
+        this.texturesProgress = progress;
+        this.currentPhase = 'textures';
     }
+    
+    let overallProgress;
+    if (this.currentPhase === 'glb') {
+        overallProgress = this.glbProgress * 0.7;
+    } else {
+        overallProgress = 70 + (this.texturesProgress * 0.3);
+    }
+    
+    // Ensure progress is between 0-100
+    overallProgress = Math.max(0, Math.min(100, overallProgress));
+    const roundedProgress = Math.round(overallProgress);
+    
+    this.progressNumber.textContent = roundedProgress;
+    this.progressBar.style.setProperty('--progress-width', `${overallProgress}%`);
+    
+    if (roundedProgress === 100) {
+        this.progressNumber.style.color = '#80ff80';
+        this.progressNumber.style.textShadow = 
+            '0 0 5px #80ff80, 0 0 10px #80ff80, 0 0 15px rgba(128, 255, 128, 0.7)';
+    }
+}
 
     complete() {
         if (this.isDestroyed) return;

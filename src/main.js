@@ -9,8 +9,10 @@ import { LoadingManager } from './loadingmanager.js';
 const canvas = document.querySelector('canvas.webgl')
 const scene = new THREE.Scene()
 
-// Initialize loading manager
-const loadingManager = new LoadingManager();
+// Initialize loading manager WITH callback to fix async error
+const loadingManager = new LoadingManager(() => {
+    console.log('Scene transition complete!');
+});
 
 const sizes = {
   width: window.innerWidth,
@@ -76,43 +78,48 @@ function animateLavaLamp() {
 // Define all assets to load
 const assets = {
     textures: [
-        { path: '/assets/textures/TV_lightmap.png', name: 'TV' },
-        { path: '/assets/textures/Wall_lightmap.png', name: 'Wall' },
-        { path: '/assets/textures/Ship_Lights_Fan_lightmap.png', name: 'Ship_Lights_Fan' },
-        { path: '/assets/textures/PaperWall_lightmap.png', name: 'PaperWall' },
-        { path: '/assets/textures/Wood_lightmap.png', name: 'Wood' },
-        { path: '/assets/textures/Cupboard_lightmap.png', name: 'Cupboard' },
-        { path: '/assets/textures/Book&Posters_lightmap.png', name: 'Book&Posters' },
-        { path: '/assets/textures/Mat_lightmap.png', name: 'Mat' },
-        { path: '/assets/textures/FloorItems_lightmap.png', name: 'FloorItems' }
+        { path: './assets/textures/TV_lightmap.png', name: 'TV' },
+        { path: './assets/textures/Wall_lightmap.png', name: 'Wall' },
+        { path: './assets/textures/Ship_Lights_Fan_lightmap.png', name: 'Ship_Lights_Fan' },
+        { path: './assets/textures/PaperWall_lightmap.png', name: 'PaperWall' },
+        { path: './assets/textures/Wood_lightmap.png', name: 'Wood' },
+        { path: './assets/textures/Cupboard_lightmap.png', name: 'Cupboard' },
+        { path: './assets/textures/Book&Posters_lightmap.png', name: 'Book&Posters' },
+        { path: './assets/textures/Mat_lightmap.webp', name: 'Mat' },
+        { path: './assets/textures/FloorItems_lightmap.png', name: 'FloorItems' }
     ]
 };
 
-// Track loading progress
-let totalAssets = assets.textures.length + 1; // +1 for GLTF
-let loadedAssets = 0;
-let gltfModel = null;
-const loadedTextures = new Map();
+// Track loading progress for simultaneous loading
+let glbLoaded = false;
+let glbProgress = 0;
+let texturesLoaded = 0;
+let totalTextures = assets.textures.length;
 
-// Function to update overall progress
+// Function to update overall progress for simultaneous loading
 function updateOverallProgress() {
-    loadedAssets++;
-    const progress = (loadedAssets / totalAssets) * 100;
+    if (loadingManager.isDestroyed) return;
     
-    if (loadedAssets <= 1) {
-        // First asset is GLTF (0-70%)
-        loadingManager.updateProgress('glb', (loadedAssets / 1) * 100);
+    let overallProgress;
+    
+    // For simultaneous loading, we weight the progress:
+    // GLB is 70% of the total progress, Textures are 30%
+    const glbWeightedProgress = glbProgress * 0.7;
+    const texturesWeightedProgress = (texturesLoaded / totalTextures) * 100 * 0.3;
+    
+    overallProgress = glbWeightedProgress + texturesWeightedProgress;
+    
+    // Ensure we don't exceed 100%
+    overallProgress = Math.min(100, overallProgress);
+    
+    // Determine which phase we're in for the LoadingManager
+    if (glbProgress < 100) {
+        loadingManager.updateProgress('glb', overallProgress);
     } else {
-        // Remaining assets are textures (70-100%)
-        const textureProgress = ((loadedAssets - 1) / (totalAssets - 1)) * 100;
-        loadingManager.updateProgress('textures', textureProgress);
+        loadingManager.updateProgress('textures', overallProgress);
     }
     
-    if (loadedAssets === totalAssets) {
-        // All assets loaded, apply textures to model
-        applyTexturesToModel();
-        setTimeout(() => loadingManager.complete(), 500);
-    }
+    console.log(`GLB: ${glbProgress.toFixed(1)}%, Textures: ${texturesLoaded}/${totalTextures}, Overall: ${overallProgress.toFixed(1)}%`);
 }
 
 // Load all textures in parallel
@@ -123,17 +130,32 @@ function loadTextures() {
         textureLoader.load(
             textureInfo.path,
             (texture) => {
+                if (loadingManager.isDestroyed) return;
                 // Process texture
                 texture.channel = 1;
                 texture.flipY = false;
                 texture.colorSpace = THREE.LinearSRGBColorSpace;
-                loadedTextures.set(textureInfo.name, texture);
+                texturesLoaded++;
                 updateOverallProgress();
+                
+                // Check if everything is loaded
+                if (texturesLoaded === totalTextures && glbLoaded) {
+                    applyTexturesToModel();
+                    loadingManager.complete();
+                }
             },
-            undefined, // No progress for individual textures
+            undefined,
             (error) => {
                 console.error(`Error loading texture: ${textureInfo.path}`, error);
-                updateOverallProgress(); // Continue even if one texture fails
+                if (!loadingManager.isDestroyed) {
+                    texturesLoaded++;
+                    updateOverallProgress();
+                    
+                    if (texturesLoaded === totalTextures && glbLoaded) {
+                        applyTexturesToModel();
+                        loadingManager.complete();
+                    }
+                }
             }
         );
     });
@@ -141,7 +163,9 @@ function loadTextures() {
 
 // Apply loaded textures to the model
 function applyTexturesToModel() {
-    if (!gltfModel) return;
+    if (!gltfModel || loadingManager.isDestroyed) return;
+    
+    const textureLoader = new THREE.TextureLoader();
     
     gltfModel.traverse((child) => {
         if (child instanceof THREE.Mesh) {
@@ -150,15 +174,26 @@ function applyTexturesToModel() {
             const mat = child.material;
             const textureName = mat.name;
             
-            if (loadedTextures.has(textureName)) {
-                const lightmap = loadedTextures.get(textureName);
-                mat.lightMap = lightmap;
-                mat.lightMapIntensity = LStrength;
-                mat.needsUpdate = true;
-                materialsWithLightMaps.push(mat);
-                
-                // Apply material-specific settings
-                applyMaterialSettings(mat, textureName);
+            const textureInfo = assets.textures.find(t => t.name === textureName);
+            if (textureInfo) {
+                textureLoader.load(
+                    textureInfo.path,
+                    (texture) => {
+                        texture.channel = 1;
+                        texture.flipY = false;
+                        texture.colorSpace = THREE.LinearSRGBColorSpace;
+                        mat.lightMap = texture;
+                        mat.lightMapIntensity = LStrength;
+                        mat.needsUpdate = true;
+                        materialsWithLightMaps.push(mat);
+                        
+                        applyMaterialSettings(mat, textureName);
+                    },
+                    undefined,
+                    (error) => {
+                        console.warn(`Failed to apply texture ${textureName}, continuing without it`);
+                    }
+                );
             }
         }
     });
@@ -185,31 +220,45 @@ function applyMaterialSettings(mat, name) {
     }
 }
 
+let gltfModel = null;
+
 // Load GLTF model
 const loader = new GLTFLoader();
-loader.load('/assets/models/textured.glb', (gltf) => {
+loader.load('./assets/models/textured.glb', (gltf) => {
+    if (loadingManager.isDestroyed) return;
+    
     gltf.scene.position.set(0, 0, 0);
     gltf.scene.scale.set(1, 1, 1);
     gltfModel = gltf.scene;
     scene.add(gltf.scene);
     
-    // Update progress for GLTF
+    // Mark GLB as loaded
+    glbLoaded = true;
+    glbProgress = 100;
     updateOverallProgress();
+    
+    // Check if textures are already loaded
+    if (texturesLoaded === totalTextures) {
+        applyTexturesToModel();
+        loadingManager.complete();
+    }
 }, 
 // GLB Progress callback
 (xhr) => {
-    // Optional: if you want more granular GLTF progress
-    const glbProgress = (xhr.loaded / xhr.total * 100);
-    loadingManager.updateProgress('glb', glbProgress * 0.7);
+    if (loadingManager.isDestroyed) return;
+    glbProgress = (xhr.loaded / xhr.total) * 100;
+    updateOverallProgress();
 },
 // GLB Error callback
 (error) => {
     console.error('Error loading GLTF:', error);
-    loadingManager.error();
+    if (!loadingManager.isDestroyed) {
+        loadingManager.error();
+    }
 });
 
 // START LOADING ALL ASSETS SIMULTANEOUSLY
-loadTextures(); // Start texture loading immediately
+loadTextures();
 
 scene.fog = new THREE.FogExp2(0x222233, 0.02);
 
