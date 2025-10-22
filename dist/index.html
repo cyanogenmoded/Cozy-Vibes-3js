@@ -14,11 +14,34 @@
       height: 100vh;
       display: block;
     }
+    #music-footer {
+      position: fixed;
+    bottom: 20px;
+    left: 20px;
+    color: rgba(255, 255, 255, 0.8);
+    font-family: system-ui, Avenir, Helvetica, Arial, sans-serif;
+    font-size: 14px;
+    font-style: italic;
+    opacity: 0;
+    transition: all 1s ease-in-out;
+    pointer-events: none;
+    z-index: 10000;
+    background: rgba(45, 45, 45, 0.3);
+    padding: 8px 12px;
+    border-radius: 6px;
+    backdrop-filter: blur(4px);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    transform: translateY(10px);
+    }
+    #music-footer.visible {
+      opacity: 1;
+    }
   </style>
-  <script type="module" crossorigin src="./assets/index-BJD7At99.js"></script>
+  <script type="module" crossorigin src="./assets/index-CH12kweA.js"></script>
 </head>
 <body>
   <canvas id="canvas" class="webgl"></canvas>
+  <div id="music-footer">Music from The Legend of Zelda: Breath of the Wild</div>
 </body>
 </html>
 
