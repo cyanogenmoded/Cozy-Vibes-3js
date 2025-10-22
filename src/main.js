@@ -5,6 +5,7 @@ import { EffectComposer } from 'three/examples/jsm/postprocessing/EffectComposer
 import { RenderPass } from 'three/examples/jsm/postprocessing/RenderPass.js';
 import { UnrealBloomPass } from 'three/examples/jsm/postprocessing/UnrealBloomPass.js';
 import { LoadingManager } from './loadingmanager.js';
+import { Howl } from 'howler';
 
 const canvas = document.querySelector('canvas.webgl')
 const scene = new THREE.Scene()
@@ -12,11 +13,92 @@ const scene = new THREE.Scene()
 // Initialize loading manager WITH callback to fix async error
 const loadingManager = new LoadingManager(() => {
     console.log('Scene transition complete!');
+    startAudio();
+    showMusicFooter();
 });
 
 const sizes = {
   width: window.innerWidth,
   height: window.innerHeight
+}
+
+// Add this after your variable declarations
+let backgroundMusic;
+let ambientNoise;
+let audioStarted = false;
+// Function to initialize and play audio
+function startAudio() {
+    if (audioStarted) return;
+    
+    // Initialize background music
+    backgroundMusic = new Howl({
+        src: ['./assets/audio/17. Rito Village (Night).ogg'],
+        volume: .33,
+        loop: true,
+        autoplay: false,
+        onplayerror: function() {
+            console.warn('Background music failed to play automatically');
+            // Try to play on user interaction
+            document.addEventListener('click', function playOnClick() {
+                backgroundMusic.play();
+                document.removeEventListener('click', playOnClick);
+            });
+        }
+    });
+
+    // Initialize ambient noise
+    ambientNoise = new Howl({
+        src: ['./assets/audio/tape-player-sounds-90780.mp3'],
+        volume: .66,
+        loop: false,
+        autoplay: true
+    });
+    // Schedule audio with delays
+    setTimeout(() => {
+        backgroundMusic.play();
+        console.log('Background music started after delay');
+    }, 6000); // 6 second delay for music
+
+
+
+    audioStarted = true;
+    console.log('Audio started');
+}
+
+// Function to stop all audio
+function stopAudio() {
+    if (backgroundMusic) {
+        backgroundMusic.stop();
+    }
+    if (ambientNoise) {
+        ambientNoise.stop();
+    }
+    audioStarted = false;
+}
+
+// Function to adjust audio volumes
+function setAudioVolumes(musicVolume = 0.3, ambientVolume = 0.1) {
+    if (backgroundMusic) {
+        backgroundMusic.volume(musicVolume);
+    }
+    if (ambientNoise) {
+        ambientNoise.volume(ambientVolume);
+    }
+}
+
+function showMusicFooter() {
+    const footer = document.getElementById('music-footer');
+    if (footer) {
+        setTimeout(() => {
+            footer.classList.add('visible');
+            console.log('Music footer displayed');
+            // Hide after 8 seconds
+            setTimeout(() => {
+                footer.classList.remove('visible');
+                console.log('Music footer hidden');
+            }, 8000);
+        }, 500);
+    }
 }
 
 const camera = new THREE.PerspectiveCamera(60, sizes.width / sizes.height, 0.1, 100)
@@ -288,3 +370,48 @@ function animate() {
     requestAnimationFrame(animate);
 }
 animate();
+
+// Add gradient background to the scene
+function createTwilightGradient() {
+    const geometry = new THREE.SphereGeometry(50, 32, 32);
+    
+    const vertexShader = `
+        varying vec3 vWorldPosition;
+        void main() {
+            vec4 worldPosition = modelMatrix * vec4(position, 1.0);
+            vWorldPosition = worldPosition.xyz;
+            gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0);
+        }
+    `;
+    
+    const fragmentShader = `
+        varying vec3 vWorldPosition;
+        void main() {
+            float mixFactor = smoothstep(-10.0, 10.0, vWorldPosition.y);
+            
+            // Deep peach to mysterious indigo
+            vec3 deepPeach = vec3(0.35, 0.2, 0.15);   // #593326
+            vec3 indigo = vec3(0.1, 0.08, 0.25);      // #1A1440
+            
+            vec3 color = mix(deepPeach, indigo, mixFactor);
+            
+            // Add some star-like sparkles
+            float sparkle = fract(sin(dot(vWorldPosition.xyz, vec3(12.9898, 78.233, 45.164))) * 43758.5453);
+            if (sparkle > 0.98) {
+                color += vec3(0.1, 0.08, 0.15);
+            }
+            
+            gl_FragColor = vec4(color, 1.0);
+        }
+    `;
+    
+    const material = new THREE.ShaderMaterial({
+        vertexShader: vertexShader,
+        fragmentShader: fragmentShader,
+        side: THREE.BackSide
+    });
+    
+    const backgroundSphere = new THREE.Mesh(geometry, material);
+    scene.add(backgroundSphere);
+}
+createTwilightGradient();
